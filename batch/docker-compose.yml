@@ -1,9 +1,14 @@
 services:
   patagonia-ubicaciones:
-    build: ./patagonia-ubicaciones
+    image: python:3.12-slim
     container_name: patagonia-ubicaciones
+    working_dir: /app
     volumes:
+      - /mnt/SERVER-TFILES/PORTAINER/patagonia-ubicaciones:/app
       - /mnt/SERVER-TFILES/PORTAINER/patagonia-html:/data
+    command: >
+      sh -lc "pip install --no-cache-dir -r requirements.txt
+      && python /app/completar_ubicaciones.py --watch --dir /data --interval-s 3"
     restart: unless-stopped
 
   patagonia-html:
