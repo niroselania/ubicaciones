@@ -4,7 +4,7 @@ services:
     container_name: patagonia-ubicaciones
     working_dir: /app
     volumes:
-      - /mnt/SERVER-TFILES/PORTAINER/patagonia-ubicaciones:/app
+      - /mnt/SERVER-TFILES/PORTAINER/patagonia-html-app:/app
       - /mnt/SERVER-TFILES/PORTAINER/patagonia-html:/data
     command: >
       sh -lc "pip install --no-cache-dir -r requirements.txt
@@ -18,7 +18,7 @@ services:
     environment:
       - DATA_DIR=/data
     volumes:
-      - /mnt/SERVER-TFILES/PORTAINER/patagonia-html-app:/app
+      - /mnt/SERVER-TFILES/PORTAINER/patagonia-ubicaciones:/app
       - /mnt/SERVER-TFILES/PORTAINER/patagonia-html:/data
     command: >
       sh -lc "pip install --no-cache-dir -r requirements.txt
