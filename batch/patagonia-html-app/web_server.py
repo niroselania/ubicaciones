@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
@@ -18,6 +19,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", str(_SCRIPT_BASE_DIR))).resolve()
 JOBS_DIR = DATA_DIR / "_jobs"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
+ELEMENTOS_SOURCE_URL = os.environ.get("ELEMENTOS_SOURCE_URL", "http://192.168.1.120:8000/download-elementos")
 
 @dataclass
 class Job:
@@ -100,6 +102,24 @@ app = FastAPI()
 def index() -> Any:
     html_path = Path(__file__).resolve().parent / "static" / "index.html"
     return html_path.read_text(encoding="utf-8")
+
+
+@app.get("/api/download-elementos")
+async def download_elementos():
+    """
+    Descarga la planilla de elementos desde un servicio externo y la devuelve como attachment.
+    Configurable por env var ELEMENTOS_SOURCE_URL.
+    """
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
+            r = await client.get(ELEMENTOS_SOURCE_URL)
+            r.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"No pude descargar elementos: {e}") from e
+
+    media_type = r.headers.get("content-type") or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    headers = {"Content-Disposition": 'attachment; filename="elementos.xlsx"'}
+    return StreamingResponse(iter([r.content]), media_type=media_type, headers=headers)
 
 
 @app.post("/api/upload")
